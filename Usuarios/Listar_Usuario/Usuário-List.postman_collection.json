@@ -1,0 +1,222 @@
+{
+	"info": {
+		"_postman_id": "df2c2b37-5704-4ad1-8381-89b5f4bdaba3",
+		"name": "ServeRest-Usuário-List",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "27946330"
+	},
+	"item": [
+		{
+			"name": "Listar Usuários Cadastrados",
+			"item": [
+				{
+					"name": "Cadastro de novo usuário com sucesso",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Body matches string\", function () {\r",
+									"    pm.expect(pm.response.text()).to.include(\"Cadastro realizado com sucesso\");\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response has the '_id' property\", function () {\r",
+									"    pm.expect(pm.response.json()).to.have.property('_id');\r",
+									"});\r",
+									"\r",
+									"//Salvar o Id na variavel de ambiente\r",
+									"pm.environment.set(\"UserId\", JSON.parse(responseBody)._id);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.environment.set(\"UserEmail\", pm.variables.replaceIn('{{$randomEmail}}'));\r",
+									"pm.environment.set(\"UserPassword\", pm.variables.replaceIn('{{$randomPassword}}'));\r",
+									"pm.environment.set(\"UserName\", pm.variables.replaceIn('{{$randomFirstName}}'));\r",
+									"\r",
+									"//E-mail Invalido\r",
+									"function invalidEmail() {\r",
+									"    var invalidEmail = [\"email.email.com\", \"email@email\"];\r",
+									"    var randomItem = invalidEmail[Math.floor(Math.random() * invalidEmail.length)];\r",
+									"    return randomItem\r",
+									"}\r",
+									"\r",
+									"pm.environment.set(\"InvalidEmail\", invalidEmail());"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"nome\": \"{{UserName}}\",\r\n  \"email\": \"{{UserEmail}}\",\r\n  \"password\": \"{{UserPassword}}\",\r\n  \"administrador\": \"true\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/usuarios",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"usuarios"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Confirmando se o usuário cadastrado consta na listagem",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Verificar se o usuário está na lista\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"    var jsonData = pm.response.json();\r",
+									"    var userId = pm.environment.get(\"UserId\");\r",
+									"    var userExists = jsonData.usuarios.some(function (usuario) {\r",
+									"        return usuario._id === userId;\r",
+									"    });\r",
+									"    pm.expect(userExists).to.be.true;\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/usuarios",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"usuarios"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consulta Informando um ID válido",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Obter a resposta JSON\r",
+									"const responseJson = pm.response.json();\r",
+									"\r",
+									"// Valores esperados das variáveis de ambiente\r",
+									"const expectedUserName = pm.environment.get(\"UserName\");\r",
+									"const expectedUserEmail = pm.environment.get(\"UserEmail\");\r",
+									"const expectedUserPassword = pm.environment.get(\"UserPassword\");\r",
+									"const expectedUserId = pm.environment.get(\"UserId\");\r",
+									"\r",
+									"// Verificar se a resposta contém todos os campos esperados\r",
+									"pm.test(\"Response contains all expected fields with correct values\", function () {\r",
+									"    pm.expect(responseJson).to.have.property('nome', expectedUserName);\r",
+									"    pm.expect(responseJson).to.have.property('email', expectedUserEmail);\r",
+									"    pm.expect(responseJson).to.have.property('password', expectedUserPassword);\r",
+									"    pm.expect(responseJson).to.have.property('_id', expectedUserId);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/usuarios/{{UserId}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"usuarios",
+								"{{UserId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consulta Informando um ID inexistente",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {\r",
+									"    pm.response.to.have.status(400);\r",
+									"});\r",
+									"pm.test(\"Body matches string\", function () {\r",
+									"    pm.expect(pm.response.text()).to.include(\"Usuário não encontrado\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/usuarios/545454",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"usuarios",
+								"545454"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
